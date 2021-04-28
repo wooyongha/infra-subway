@@ -61,6 +61,21 @@ public class StationAcceptanceTest extends AcceptanceTest {
         지하철역_목록_포함됨(response, Arrays.asList(createResponse1, createResponse2));
     }
 
+    @DisplayName("지하철역을 페이지별로 조회한다.")
+    @Test
+    void getStationsByPage() {
+        // given
+        ExtractableResponse<Response> createResponse1 = 지하철역_등록되어_있음(강남역);
+        ExtractableResponse<Response> createResponse2 = 지하철역_등록되어_있음(역삼역);
+
+        // when
+        ExtractableResponse<Response> response = 지하철역_페이지_조회_요청(0, 1);
+
+        // then
+        지하철역_목록_응답됨(response);
+        지하철역_페이지_목록_포함됨(response, Arrays.asList(createResponse1));
+    }
+
     @DisplayName("지하철역을 제거한다.")
     @Test
     void deleteStation() {
@@ -96,6 +111,16 @@ public class StationAcceptanceTest extends AcceptanceTest {
         return RestAssured.given().log().all().
                 when().
                 get("/stations").
+                then().
+                log().all().
+                extract();
+    }
+
+    public static ExtractableResponse<Response> 지하철역_페이지_조회_요청(int page, int size) {
+        final String requestUrl = String.format("/stations?page=%d&size=%d", page, size);
+        return RestAssured.given().log().all().
+                when().
+                get(requestUrl).
                 then().
                 log().all().
                 extract();
@@ -139,5 +164,17 @@ public class StationAcceptanceTest extends AcceptanceTest {
                 .collect(Collectors.toList());
 
         assertThat(resultLineIds).containsAll(expectedLineIds);
+    }
+
+    public static void 지하철역_페이지_목록_포함됨(ExtractableResponse<Response> response, List<ExtractableResponse<Response>> createdResponses) {
+        List<Long> expectedLineIds = createdResponses.stream()
+                .map(it -> Long.parseLong(it.header("Location").split("/")[2]))
+                .collect(Collectors.toList());
+
+        List<Long> resultLineIds = response.jsonPath().getList(".", StationResponse.class).stream()
+                .map(StationResponse::getId)
+                .collect(Collectors.toList());
+
+        assertThat(resultLineIds).isEqualTo(expectedLineIds);
     }
 }
