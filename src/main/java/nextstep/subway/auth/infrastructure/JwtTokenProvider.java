@@ -37,7 +37,7 @@ public class JwtTokenProvider {
             Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
             return !claims.getBody().getExpiration().before(new Date());
         } catch (JwtException | IllegalArgumentException e) {
-            log.warn("Invalid Token Access");
+            // log.warn("Invalid Token Access");
             return false;
         }
     }
